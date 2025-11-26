@@ -327,36 +327,30 @@
 
     .tno-quarter {
       position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
       cursor: pointer;
       background: transparent;
+      /* pour que seuls les polygones cliquent */
+      pointer-events: auto;
     }
 
+    /* quarts en "camembert", orientés haut/droite/bas/gauche */
     .tno-quarter.up {
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 50%;
-    }
-
-    .tno-quarter.down {
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 50%;
-    }
-
-    .tno-quarter.left {
-      top: 0;
-      left: 0;
-      width: 50%;
-      height: 100%;
+      clip-path: polygon(50% 50%, 0 0, 100% 0);
     }
 
     .tno-quarter.right {
-      top: 0;
-      right: 0;
-      width: 50%;
-      height: 100%;
+      clip-path: polygon(50% 50%, 100% 0, 100% 100%);
+    }
+
+    .tno-quarter.down {
+      clip-path: polygon(50% 50%, 0 100%, 100% 100%);
+    }
+
+    .tno-quarter.left {
+      clip-path: polygon(50% 50%, 0 0, 0 100%);
     }
 
     .tno-quarter.selected {
@@ -447,7 +441,7 @@
 
     <div class="buttons-row">
       <button class="btn" id="checkABC">Vérifier les images</button>
-      <button class="btn btn-secondary" id="resetAll">Remise à zéro</button>
+      <button class="btn btn-secondary" id="resetAll">Remise à zéro (tout)</button>
     </div>
 
     <div class="result" id="abcResult"></div>
@@ -466,6 +460,7 @@
 
     <div class="buttons-row">
       <button class="btn" id="checkTNO">Vérifier TNO</button>
+      <button class="btn btn-secondary" id="resetTNO">Remise à zéro TNO</button>
     </div>
 
     <div class="result" id="tnoResult"></div>
@@ -549,7 +544,7 @@
         (d) => Number(d.dataset.number) === n
       );
       const goodElem = diamondElm.querySelector(`.target.${good}`);
-      goodElem.classList.add("correct");
+      if (goodElem) goodElem.classList.add("correct");
 
       const userPos = selectedPositions[n];
       if (!userPos) continue;
@@ -668,7 +663,6 @@
 
   // ------------------ PARTIE 3 : TNO ------------------
 
-  // 3 plaques × 4 cercles
   // Plaque 1 : bas, gauche, haut, bas
   // Plaque 2 : haut, gauche, droite, droite
   // Plaque 3 : bas, droite, haut, gauche
@@ -678,7 +672,7 @@
     ["down", "right", "up", "left"],
   ];
 
-  const selectedTNO = {}; // clé "plate-index" -> dir
+  const selectedTNO = {}; // clé "plate-circle" -> dir
   const tnoPlates = document.getElementById("tnoPlates");
 
   for (let plate = 0; plate < 3; plate++) {
@@ -692,7 +686,6 @@
       circle.dataset.plate = plate;
       circle.dataset.circle = c;
 
-      // croix
       const v = document.createElement("div");
       v.className = "tno-cross-vert";
       circle.appendChild(v);
@@ -727,9 +720,7 @@
       q.classList.remove("selected", "correct", "wrong");
     });
 
-    const chosen = circle.querySelector(
-      `.tno-quarter[data-dir="${dir}"]`
-    );
+    const chosen = circle.querySelector(`.tno-quarter[data-dir="${dir}"]`);
     if (chosen) chosen.classList.add("selected");
   }
 
@@ -782,6 +773,9 @@
     ).textContent = `Score : ${correct} / ${total}`;
   });
 
+  // Bouton de remise à zéro TNO seul
+  document.getElementById("resetTNO").addEventListener("click", resetTNO);
+
   // ------------------ RESET GLOBAL ------------------
 
   document.getElementById("resetAll").addEventListener("click", () => {
@@ -792,3 +786,4 @@
 </script>
 </body>
 </html>
+
