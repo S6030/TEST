@@ -6,10 +6,20 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #ffffff;
+      background: #f3f4f6;
       margin: 0;
       padding: 0;
       text-align: center;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 20px auto 40px auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      border: 2px solid #d0d7de;
+      overflow: hidden;
     }
 
     /* BANNIÈRE */
@@ -17,8 +27,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 40px;
+      padding: 18px 40px;
       border-bottom: 3px solid #000;
+      background: #ffffff;
     }
 
     .banner-col {
@@ -39,6 +50,7 @@
       font-weight: bold;
       color: #1a73e8;
       margin: 0;
+      letter-spacing: 1px;
     }
 
     .title-butter {
@@ -46,30 +58,48 @@
       font-weight: bold;
       color: #c2185b;
       margin: 0;
+      letter-spacing: 1px;
     }
 
     .title-main {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: bold;
       margin: 0;
     }
 
     /* SECTIONS */
     .section {
-      padding: 15px 0 5px 0;
+      padding: 18px 20px 10px 20px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .section:last-of-type {
+      border-bottom: none;
+      padding-bottom: 20px;
+    }
+
+    .section h2 {
+      margin: 4px 0 4px 0;
     }
 
     .subtitle {
-      font-size: 14px;
+      font-size: 13px;
       margin-bottom: 10px;
+      color: #555;
     }
 
     /* LOSANGES */
+    .diamonds-wrapper {
+      display: inline-block;
+      padding: 10px 15px 15px 15px;
+      border: 2px solid #000;
+      margin-top: 5px;
+    }
+
     .diamonds-container {
-      display: inline-grid;
+      display: grid;
       grid-template-columns: repeat(3, 100px);
       gap: 12px;
-      margin-bottom: 10px;
     }
 
     .diamond {
@@ -163,10 +193,16 @@
     }
 
     /* LIGNES A/B/C */
+    .grid-abc-wrapper {
+      display: inline-block;
+      padding: 10px 15px 15px 15px;
+      border: 2px solid #000;
+      margin-top: 5px;
+      text-align: left;
+    }
+
     .grid-abc {
       display: inline-block;
-      text-align: left;
-      margin-top: 10px;
     }
 
     .abc-row {
@@ -243,9 +279,13 @@
     }
 
     /* BOUTONS */
+    .buttons-row {
+      margin-top: 10px;
+    }
+
     .btn {
       display: inline-block;
-      margin: 8px;
+      margin: 5px 6px;
       padding: 8px 16px;
       font-size: 13px;
       font-weight: bold;
@@ -254,6 +294,10 @@
       cursor: pointer;
       background: #1a73e8;
       color: #fff;
+    }
+
+    .btn-secondary {
+      background: #6b7280;
     }
 
     .btn:active {
@@ -268,6 +312,7 @@
 </head>
 <body>
 
+<div class="page">
   <!-- BANNIÈRE -->
   <div class="banner">
     <div class="banner-col">
@@ -287,207 +332,244 @@
   <div class="section">
     <h2>Partie 1 – Losanges</h2>
     <p class="subtitle">
-      Clique sur la cible où doit se trouver le point rouge.
+      Clique sur la cible où doit se trouver le point.
     </p>
-    <div class="diamonds-container" id="diamonds"></div>
-    <br />
-    <button class="btn" id="checkDiamonds">Vérifier les losanges</button>
+    <div class="diamonds-wrapper">
+      <div class="diamonds-container" id="diamonds"></div>
+    </div>
+    <div class="buttons-row">
+      <button class="btn" id="checkDiamonds">Vérifier les losanges</button>
+    </div>
     <div class="result" id="diamondsResult"></div>
   </div>
-
-  <hr style="margin: 15px 0;" />
 
   <!-- PARTIE A/B/C -->
   <div class="section">
     <h2>Partie 2 – Lignes A / B / C (cases numérotées)</h2>
     <p class="subtitle">Pour chaque ligne, clique sur le numéro que tu penses correct.</p>
 
-    <div class="grid-abc" id="abcGrid"></div>
+    <div class="grid-abc-wrapper">
+      <div class="grid-abc" id="abcGrid"></div>
+    </div>
 
-    <button class="btn" id="checkABC">Vérifier les images</button>
+    <div class="buttons-row">
+      <button class="btn" id="checkABC">Vérifier les images</button>
+      <button class="btn btn-secondary" id="resetAll">Remise à zéro</button>
+    </div>
+
     <div class="result" id="abcResult"></div>
   </div>
+</div>
 
-  <script>
-    // ------------------ LOGIQUE LOSANGES ------------------
+<script>
+  // ------------------ LOGIQUE LOSANGES ------------------
 
-    const correctPositions = {
-      1: "down",
-      2: "left",
-      3: "right",
-      4: "up",
-      5: "up",
-      6: "right",
-      7: "right",
-      8: "left",
-      9: "down",
-    };
+  // Bonnes positions (corrigées)
+  // 1 bas, 2 gauche, 3 bas, 4 haut, 5 haut, 6 gauche, 7 droite, 8 gauche, 9 droite
+  const correctPositions = {
+    1: "down",
+    2: "left",
+    3: "down",
+    4: "up",
+    5: "up",
+    6: "left",
+    7: "right",
+    8: "left",
+    9: "right",
+  };
 
-    const selectedPositions = {};
+  const selectedPositions = {};
+  const diamondsContainer = document.getElementById("diamonds");
 
-    const diamondsContainer = document.getElementById("diamonds");
+  // Crée les 9 losanges
+  for (let n = 1; n <= 9; n++) {
+    const d = document.createElement("div");
+    d.className = "diamond";
+    d.dataset.number = n;
 
-    // Création des 9 losanges
+    const shape = document.createElement("div");
+    shape.className = "diamond-shape";
+    d.appendChild(shape);
+
+    const num = document.createElement("div");
+    num.className = "diamond-number";
+    num.textContent = n;
+    d.appendChild(num);
+
+    ["up", "right", "down", "left"].forEach((pos) => {
+      const t = document.createElement("div");
+      t.className = "target " + pos;
+      t.dataset.pos = pos;
+      t.dataset.number = n;
+      t.addEventListener("click", () => selectTarget(n, pos, t, d));
+      d.appendChild(t);
+    });
+
+    diamondsContainer.appendChild(d);
+  }
+
+  function selectTarget(number, pos, targetElem, diamondElem) {
+    selectedPositions[number] = pos;
+
+    // reset visuel pour ce losange
+    diamondElem.querySelectorAll(".target").forEach((t) => {
+      t.classList.remove("selected", "correct", "wrong");
+    });
+
+    targetElem.classList.add("selected");
+  }
+
+  function resetDiamonds() {
+    // efface choix
+    for (let key in selectedPositions) {
+      delete selectedPositions[key];
+    }
+    document.querySelectorAll(".target").forEach((t) => {
+      t.classList.remove("selected", "correct", "wrong");
+    });
+    document.getElementById("diamondsResult").textContent = "";
+  }
+
+  document.getElementById("checkDiamonds").addEventListener("click", () => {
+    let correct = 0;
+    const total = 9;
+
+    // enlever anciennes corrections
+    document.querySelectorAll(".target").forEach((t) => {
+      t.classList.remove("correct", "wrong");
+    });
+
     for (let n = 1; n <= 9; n++) {
-      const d = document.createElement("div");
-      d.className = "diamond";
-      d.dataset.number = n;
+      const good = correctPositions[n];
+      const diamondElm = [...document.querySelectorAll(".diamond")].find(
+        (d) => Number(d.dataset.number) === n
+      );
+      const goodElem = diamondElm.querySelector(`.target.${good}`);
+      goodElem.classList.add("correct");
 
-      const shape = document.createElement("div");
-      shape.className = "diamond-shape";
-      d.appendChild(shape);
+      const userPos = selectedPositions[n];
+      if (!userPos) continue;
+
+      if (userPos === good) {
+        correct++;
+      } else {
+        const wrongElem = diamondElm.querySelector(`.target.${userPos}`);
+        if (wrongElem) wrongElem.classList.add("wrong");
+      }
+    }
+
+    document.getElementById(
+      "diamondsResult"
+    ).textContent = `Score : ${correct} / ${total}`;
+  });
+
+  // ------------------ LOGIQUE A / B / C ------------------
+
+  // bonnes réponses (index 0-based) : A2, B4, C3
+  const correctBoxes = { A: 1, B: 3, C: 2 };
+  const selectedBoxes = {};
+  const abcGrid = document.getElementById("abcGrid");
+
+  ["A", "B", "C"].forEach((line) => {
+    const row = document.createElement("div");
+    row.className = "abc-row";
+
+    const label = document.createElement("div");
+    label.className = "abc-label";
+    label.textContent = line;
+    row.appendChild(label);
+
+    const cellsContainer = document.createElement("div");
+    cellsContainer.className = "abc-cells";
+
+    for (let i = 0; i < 5; i++) {
+      const cell = document.createElement("div");
+      cell.className = "abc-cell";
+      cell.dataset.line = line;
+      cell.dataset.index = i;
+
+      const cross = document.createElement("div");
+      cross.className = "abc-cross-line";
+      cell.appendChild(cross);
 
       const num = document.createElement("div");
-      num.className = "diamond-number";
-      num.textContent = n;
-      d.appendChild(num);
+      num.className = "abc-number";
+      num.textContent = i + 1;
+      cell.appendChild(num);
 
-      ["up", "right", "down", "left"].forEach((pos) => {
-        const t = document.createElement("div");
-        t.className = "target " + pos;
-        t.dataset.pos = pos;
-        t.dataset.number = n;
-        t.addEventListener("click", () => selectTarget(n, pos, t, d));
-        d.appendChild(t);
-      });
+      cell.addEventListener("click", () => selectBox(line, i));
 
-      diamondsContainer.appendChild(d);
+      cellsContainer.appendChild(cell);
     }
 
-    function selectTarget(number, pos, targetElem, diamondElem) {
-      selectedPositions[number] = pos;
+    row.appendChild(cellsContainer);
+    abcGrid.appendChild(row);
+  });
 
-      // reset visuel pour ce losange
-      diamondElem.querySelectorAll(".target").forEach((t) => {
-        t.classList.remove("selected", "correct", "wrong");
+  function selectBox(line, index) {
+    selectedBoxes[line] = index;
+
+    document
+      .querySelectorAll(`.abc-cell[data-line="${line}"]`)
+      .forEach((cell) => {
+        cell.classList.remove("selected", "correct", "wrong");
       });
 
-      targetElem.classList.add("selected");
+    const cell = document.querySelector(
+      `.abc-cell[data-line="${line}"][data-index="${index}"]`
+    );
+    if (cell) cell.classList.add("selected");
+  }
+
+  function resetABC() {
+    for (let key in selectedBoxes) {
+      delete selectedBoxes[key];
     }
-
-    document.getElementById("checkDiamonds").addEventListener("click", () => {
-      let correct = 0;
-      const total = 9;
-
-      document.querySelectorAll(".target").forEach((t) => {
-        t.classList.remove("correct", "wrong");
-      });
-
-      for (let n = 1; n <= 9; n++) {
-        const good = correctPositions[n];
-        const diamondElm = [...document.querySelectorAll(".diamond")].find(
-          (d) => Number(d.dataset.number) === n
-        );
-        const goodElem = diamondElm.querySelector(`.target.${good}`);
-        goodElem.classList.add("correct");
-
-        const userPos = selectedPositions[n];
-        if (!userPos) continue;
-
-        if (userPos === good) {
-          correct++;
-        } else {
-          const wrongElem = diamondElm.querySelector(`.target.${userPos}`);
-          if (wrongElem) wrongElem.classList.add("wrong");
-        }
-      }
-
-      document.getElementById(
-        "diamondsResult"
-      ).textContent = `Score : ${correct} / ${total}`;
+    document.querySelectorAll(".abc-cell").forEach((cell) => {
+      cell.classList.remove("selected", "correct", "wrong");
     });
+    document.getElementById("abcResult").textContent = "";
+  }
 
-    // ------------------ LOGIQUE A / B / C ------------------
+  document.getElementById("checkABC").addEventListener("click", () => {
+    let correct = 0;
+    const total = 3;
 
-    // bonnes réponses (index 0-based) : A2, B4, C3
-    const correctBoxes = { A: 1, B: 3, C: 2 };
-    const selectedBoxes = {};
-
-    const abcGrid = document.getElementById("abcGrid");
+    document.querySelectorAll(".abc-cell").forEach((cell) => {
+      cell.classList.remove("correct", "wrong");
+    });
 
     ["A", "B", "C"].forEach((line) => {
-      const row = document.createElement("div");
-      row.className = "abc-row";
-
-      const label = document.createElement("div");
-      label.className = "abc-label";
-      label.textContent = line;
-      row.appendChild(label);
-
-      const cellsContainer = document.createElement("div");
-      cellsContainer.className = "abc-cells";
-
-      for (let i = 0; i < 5; i++) {
-        const cell = document.createElement("div");
-        cell.className = "abc-cell";
-        cell.dataset.line = line;
-        cell.dataset.index = i;
-
-        const cross = document.createElement("div");
-        cross.className = "abc-cross-line";
-        cell.appendChild(cross);
-
-        const num = document.createElement("div");
-        num.className = "abc-number";
-        num.textContent = i + 1;
-        cell.appendChild(num);
-
-        cell.addEventListener("click", () => selectBox(line, i));
-
-        cellsContainer.appendChild(cell);
-      }
-
-      row.appendChild(cellsContainer);
-      abcGrid.appendChild(row);
-    });
-
-    function selectBox(line, index) {
-      selectedBoxes[line] = index;
-
-      document
-        .querySelectorAll(`.abc-cell[data-line="${line}"]`)
-        .forEach((cell) => {
-          cell.classList.remove("selected", "correct", "wrong");
-        });
-
-      const cell = document.querySelector(
-        `.abc-cell[data-line="${line}"][data-index="${index}"]`
+      const goodIdx = correctBoxes[line];
+      const goodCell = document.querySelector(
+        `.abc-cell[data-line="${line}"][data-index="${goodIdx}"]`
       );
-      if (cell) cell.classList.add("selected");
-    }
+      if (goodCell) goodCell.classList.add("correct");
 
-    document.getElementById("checkABC").addEventListener("click", () => {
-      let correct = 0;
-      const total = 3;
+      const userIdx = selectedBoxes[line];
+      if (userIdx === undefined) return;
 
-      document.querySelectorAll(".abc-cell").forEach((cell) => {
-        cell.classList.remove("correct", "wrong");
-      });
-
-      ["A", "B", "C"].forEach((line) => {
-        const goodIdx = correctBoxes[line];
-        const goodCell = document.querySelector(
-          `.abc-cell[data-line="${line}"][data-index="${goodIdx}"]`
+      if (userIdx === goodIdx) {
+        correct++;
+      } else {
+        const badCell = document.querySelector(
+          `.abc-cell[data-line="${line}"][data-index="${userIdx}"]`
         );
-        if (goodCell) goodCell.classList.add("correct");
-
-        const userIdx = selectedBoxes[line];
-        if (userIdx === undefined) return;
-
-        if (userIdx === goodIdx) {
-          correct++;
-        } else {
-          const badCell = document.querySelector(
-            `.abc-cell[data-line="${line}"][data-index="${userIdx}"]`
-          );
-          if (badCell) badCell.classList.add("wrong");
-        }
-      });
-
-      document.getElementById(
-        "abcResult"
-      ).textContent = `Score : ${correct} / ${total}`;
+        if (badCell) badCell.classList.add("wrong");
+      }
     });
-  </script>
+
+    document.getElementById(
+      "abcResult"
+    ).textContent = `Score : ${correct} / ${total}`;
+  });
+
+  // ------------------ RESET GLOBAL ------------------
+
+  document.getElementById("resetAll").addEventListener("click", () => {
+    resetDiamonds();
+    resetABC();
+  });
+</script>
 </body>
 </html>
