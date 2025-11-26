@@ -1,364 +1,493 @@
-import tkinter as tk
-from tkinter import messagebox
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>FlyTest / ButterflyTest – Entraînement visuel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
 
+    /* BANNIÈRE */
+    .banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      border-bottom: 3px solid #000;
+    }
 
-class TestVisuelApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("FlyTest / ButterflyTest – Entraînement Visuel")
-        self.configure(bg="white")
+    .banner-col {
+      flex: 1;
+    }
 
-        # ---------- données losanges ----------
-        self.correct_positions = {
-            1: "down",
-            2: "left",
-            3: "right",
-            4: "up",
-            5: "up",
-            6: "right",
-            7: "right",
-            8: "left",
-            9: "down",
+    .banner-col.center {
+      flex: 2;
+    }
+
+    .logo-big {
+      font-size: 60px;
+      margin: 0;
+    }
+
+    .title-fly {
+      font-size: 26px;
+      font-weight: bold;
+      color: #1a73e8;
+      margin: 0;
+    }
+
+    .title-butter {
+      font-size: 26px;
+      font-weight: bold;
+      color: #c2185b;
+      margin: 0;
+    }
+
+    .title-main {
+      font-size: 26px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    /* SECTIONS */
+    .section {
+      padding: 15px 0 5px 0;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    /* LOSANGES */
+    .diamonds-container {
+      display: inline-grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .diamond {
+      width: 90px;
+      height: 90px;
+      position: relative;
+      margin: auto;
+    }
+
+    .diamond-shape {
+      width: 70px;
+      height: 70px;
+      border: 2px solid #000;
+      transform: rotate(45deg);
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      box-sizing: border-box;
+      background: #fff;
+    }
+
+    .diamond-number {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .target {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #000;
+      position: absolute;
+      box-sizing: border-box;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .target::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      border: 1px solid #000;
+      background: #fff;
+    }
+
+    .target.up {
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .target.right {
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .target.down {
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .target.left {
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .target.selected {
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 2px #a5c8ff;
+    }
+
+    .target.correct {
+      border-color: #1faa00;
+      box-shadow: 0 0 0 2px #9df59d;
+    }
+
+    .target.wrong {
+      border-color: #d50000;
+      box-shadow: 0 0 0 2px #ffb3b3;
+    }
+
+    /* LIGNES A/B/C */
+    .grid-abc {
+      display: inline-block;
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    .abc-row {
+      display: flex;
+      align-items: center;
+      margin: 6px 0;
+    }
+
+    .abc-label {
+      font-size: 18px;
+      font-weight: bold;
+      width: 30px;
+      text-align: center;
+    }
+
+    .abc-cells {
+      display: flex;
+      gap: 8px;
+    }
+
+    .abc-cell {
+      width: 80px;
+      height: 80px;
+      border: 3px solid #000;
+      position: relative;
+      background: #fff;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .abc-cross-line {
+      position: absolute;
+      width: 2px;
+      background: #000;
+      top: 10px;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+    }
+
+    .abc-cross-line::after {
+      content: "";
+      position: absolute;
+      width: 2px;
+      background: #000;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      transform: rotate(90deg);
+    }
+
+    .abc-number {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .abc-cell.selected {
+      border-color: #1a73e8;
+      background: #dde9ff;
+    }
+
+    .abc-cell.correct {
+      border-color: #1faa00;
+      background: #9df59d;
+    }
+
+    .abc-cell.wrong {
+      border-color: #d50000;
+      background: #ffb3b3;
+    }
+
+    /* BOUTONS */
+    .btn {
+      display: inline-block;
+      margin: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      background: #1a73e8;
+      color: #fff;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .result {
+      margin-top: 5px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BANNIÈRE -->
+  <div class="banner">
+    <div class="banner-col">
+      <p class="logo-big">🪰</p>
+      <p class="title-fly">FLYTEST</p>
+    </div>
+    <div class="banner-col center">
+      <p class="title-main">TEST VISUEL – ENTRAÎNEMENT</p>
+    </div>
+    <div class="banner-col">
+      <p class="logo-big">🦋</p>
+      <p class="title-butter">BUTTERFLYTEST</p>
+    </div>
+  </div>
+
+  <!-- PARTIE LOSANGES -->
+  <div class="section">
+    <h2>Partie 1 – Losanges</h2>
+    <p class="subtitle">
+      Clique sur la cible où doit se trouver le point rouge.
+    </p>
+    <div class="diamonds-container" id="diamonds"></div>
+    <br />
+    <button class="btn" id="checkDiamonds">Vérifier les losanges</button>
+    <div class="result" id="diamondsResult"></div>
+  </div>
+
+  <hr style="margin: 15px 0;" />
+
+  <!-- PARTIE A/B/C -->
+  <div class="section">
+    <h2>Partie 2 – Lignes A / B / C (cases numérotées)</h2>
+    <p class="subtitle">Pour chaque ligne, clique sur le numéro que tu penses correct.</p>
+
+    <div class="grid-abc" id="abcGrid"></div>
+
+    <button class="btn" id="checkABC">Vérifier les images</button>
+    <div class="result" id="abcResult"></div>
+  </div>
+
+  <script>
+    // ------------------ LOGIQUE LOSANGES ------------------
+
+    const correctPositions = {
+      1: "down",
+      2: "left",
+      3: "right",
+      4: "up",
+      5: "up",
+      6: "right",
+      7: "right",
+      8: "left",
+      9: "down",
+    };
+
+    const selectedPositions = {};
+
+    const diamondsContainer = document.getElementById("diamonds");
+
+    // Création des 9 losanges
+    for (let n = 1; n <= 9; n++) {
+      const d = document.createElement("div");
+      d.className = "diamond";
+      d.dataset.number = n;
+
+      const shape = document.createElement("div");
+      shape.className = "diamond-shape";
+      d.appendChild(shape);
+
+      const num = document.createElement("div");
+      num.className = "diamond-number";
+      num.textContent = n;
+      d.appendChild(num);
+
+      ["up", "right", "down", "left"].forEach((pos) => {
+        const t = document.createElement("div");
+        t.className = "target " + pos;
+        t.dataset.pos = pos;
+        t.dataset.number = n;
+        t.addEventListener("click", () => selectTarget(n, pos, t, d));
+        d.appendChild(t);
+      });
+
+      diamondsContainer.appendChild(d);
+    }
+
+    function selectTarget(number, pos, targetElem, diamondElem) {
+      selectedPositions[number] = pos;
+
+      // reset visuel pour ce losange
+      diamondElem.querySelectorAll(".target").forEach((t) => {
+        t.classList.remove("selected", "correct", "wrong");
+      });
+
+      targetElem.classList.add("selected");
+    }
+
+    document.getElementById("checkDiamonds").addEventListener("click", () => {
+      let correct = 0;
+      const total = 9;
+
+      document.querySelectorAll(".target").forEach((t) => {
+        t.classList.remove("correct", "wrong");
+      });
+
+      for (let n = 1; n <= 9; n++) {
+        const good = correctPositions[n];
+        const diamondElm = [...document.querySelectorAll(".diamond")].find(
+          (d) => Number(d.dataset.number) === n
+        );
+        const goodElem = diamondElm.querySelector(`.target.${good}`);
+        goodElem.classList.add("correct");
+
+        const userPos = selectedPositions[n];
+        if (!userPos) continue;
+
+        if (userPos === good) {
+          correct++;
+        } else {
+          const wrongElem = diamondElm.querySelector(`.target.${userPos}`);
+          if (wrongElem) wrongElem.classList.add("wrong");
         }
-        self.selected_positions = {}
-        self.diamonds = {}
+      }
 
-        # ---------- données cases neutres ----------
-        # bonnes réponses : A2, B4, C3
-        self.correct_boxes = {"A": 1, "B": 3, "C": 2}
-        self.selected_boxes = {}
-        self.box_cells = {}
+      document.getElementById(
+        "diamondsResult"
+      ).textContent = `Score : ${correct} / ${total}`;
+    });
 
-        # Construire toute l’interface
-        self.build_ui()
+    // ------------------ LOGIQUE A / B / C ------------------
 
-    # =========================================================
-    #  CONSTRUCTION INTERFACE COMPLÈTE
-    # =========================================================
-    def build_ui(self):
+    // bonnes réponses (index 0-based) : A2, B4, C3
+    const correctBoxes = { A: 1, B: 3, C: 2 };
+    const selectedBoxes = {};
 
-        # ============================
-        #     BANNIÈRE DES TESTS
-        # ============================
-        banner = tk.Frame(self, bg="white")
-        banner.pack(pady=(20, 20), fill="x")
+    const abcGrid = document.getElementById("abcGrid");
 
-        # Colonne gauche : FLYTEST
-        left = tk.Frame(banner, bg="white")
-        left.pack(side="left", expand=True)
+    ["A", "B", "C"].forEach((line) => {
+      const row = document.createElement("div");
+      row.className = "abc-row";
 
-        tk.Label(left, text="🪰", font=("Arial", 60), bg="white").pack()
-        tk.Label(
-            left,
-            text="FLYTEST",
-            font=("Arial", 26, "bold"),
-            fg="#1a73e8",
-            bg="white",
-        ).pack()
+      const label = document.createElement("div");
+      label.className = "abc-label";
+      label.textContent = line;
+      row.appendChild(label);
 
-        # Colonne centrale
-        center = tk.Frame(banner, bg="white")
-        center.pack(side="left", expand=True)
+      const cellsContainer = document.createElement("div");
+      cellsContainer.className = "abc-cells";
 
-        tk.Label(
-            center,
-            text="TEST VISUEL – ENTRAÎNEMENT",
-            font=("Arial", 26, "bold"),
-            bg="white"
-        ).pack(pady=5)
+      for (let i = 0; i < 5; i++) {
+        const cell = document.createElement("div");
+        cell.className = "abc-cell";
+        cell.dataset.line = line;
+        cell.dataset.index = i;
 
-        # Colonne droite : BUTTERFLYTEST
-        right = tk.Frame(banner, bg="white")
-        right.pack(side="left", expand=True)
+        const cross = document.createElement("div");
+        cross.className = "abc-cross-line";
+        cell.appendChild(cross);
 
-        tk.Label(right, text="🦋", font=("Arial", 60), bg="white").pack()
-        tk.Label(
-            right,
-            text="BUTTERFLYTEST",
-            font=("Arial", 26, "bold"),
-            fg="#c2185b",
-            bg="white",
-        ).pack()
+        const num = document.createElement("div");
+        num.className = "abc-number";
+        num.textContent = i + 1;
+        cell.appendChild(num);
 
-        tk.Frame(self, height=3, bg="#000000").pack(fill="x", pady=(5, 20))
+        cell.addEventListener("click", () => selectBox(line, i));
 
-        # ============================
-        #     PARTIE LOSANGES
-        # ============================
-        frame_top = tk.Frame(self, bg="white")
-        frame_top.pack(padx=10, pady=10)
+        cellsContainer.appendChild(cell);
+      }
 
-        tk.Label(
-            frame_top,
-            text="Partie 1 – Losanges",
-            bg="white",
-            font=("Arial", 14, "bold"),
-        ).grid(row=0, column=0, columnspan=3, pady=(0, 5))
+      row.appendChild(cellsContainer);
+      abcGrid.appendChild(row);
+    });
 
-        tk.Label(
-            frame_top,
-            text="Clique sur la cible où doit se trouver le point rouge.",
-            bg="white",
-            font=("Arial", 10),
-        ).grid(row=1, column=0, columnspan=3, pady=(0, 10))
+    function selectBox(line, index) {
+      selectedBoxes[line] = index;
 
-        num = 1
-        for r in range(3):
-            for c in range(3):
-                canvas = tk.Canvas(
-                    frame_top,
-                    width=90,
-                    height=90,
-                    bg="white",
-                    highlightthickness=0
-                )
-                canvas.grid(row=r + 2, column=c, padx=10, pady=10)
-                self.draw_diamond(canvas, num)
-                num += 1
+      document
+        .querySelectorAll(`.abc-cell[data-line="${line}"]`)
+        .forEach((cell) => {
+          cell.classList.remove("selected", "correct", "wrong");
+        });
 
-        tk.Button(
-            frame_top,
-            text="Vérifier les losanges",
-            font=("Arial", 11, "bold"),
-            command=self.check_diamonds,
-        ).grid(row=5, column=0, columnspan=3, pady=(5, 0))
+      const cell = document.querySelector(
+        `.abc-cell[data-line="${line}"][data-index="${index}"]`
+      );
+      if (cell) cell.classList.add("selected");
+    }
 
-        # Ligne de séparation
-        tk.Frame(self, height=2, bg="#333333").pack(fill="x", pady=10)
+    document.getElementById("checkABC").addEventListener("click", () => {
+      let correct = 0;
+      const total = 3;
 
-        # ============================
-        #   PARTIE A/B/C
-        # ============================
-        frame_bottom = tk.Frame(self, bg="white")
-        frame_bottom.pack(padx=10, pady=(0, 10))
+      document.querySelectorAll(".abc-cell").forEach((cell) => {
+        cell.classList.remove("correct", "wrong");
+      });
 
-        tk.Label(
-            frame_bottom,
-            text="Partie 2 – Lignes A / B / C (cases numérotées)",
-            bg="white",
-            font=("Arial", 14, "bold"),
-        ).grid(row=0, column=0, columnspan=6, pady=(0, 10))
+      ["A", "B", "C"].forEach((line) => {
+        const goodIdx = correctBoxes[line];
+        const goodCell = document.querySelector(
+          `.abc-cell[data-line="${line}"][data-index="${goodIdx}"]`
+        );
+        if (goodCell) goodCell.classList.add("correct");
 
-        CELL_SIZE = 80
-        self.box_cells = {}
-        row_index = 1
+        const userIdx = selectedBoxes[line];
+        if (userIdx === undefined) return;
 
-        for line in ["A", "B", "C"]:
-            # Lettre à gauche
-            tk.Label(
-                frame_bottom,
-                text=line,
-                bg="white",
-                font=("Arial", 18, "bold"),
-            ).grid(row=row_index, column=0, padx=10)
-
-            self.box_cells[line] = []
-
-            for i in range(5):
-                canvas = tk.Canvas(
-                    frame_bottom,
-                    width=CELL_SIZE,
-                    height=CELL_SIZE,
-                    bg="white",
-                    highlightthickness=0,
-                )
-                canvas.grid(row=row_index, column=i + 1, padx=8, pady=6)
-
-                # Cadre noir
-                rect = canvas.create_rectangle(
-                    2, 2, CELL_SIZE - 2, CELL_SIZE - 2,
-                    outline="black",
-                    width=3
-                )
-
-                # Petite croix
-                margin = 10
-                canvas.create_line(
-                    margin, margin,
-                    CELL_SIZE - margin, CELL_SIZE - margin,
-                    width=2
-                )
-                canvas.create_line(
-                    CELL_SIZE - margin, margin,
-                    margin, CELL_SIZE - margin,
-                    width=2
-                )
-
-                # Numéro central
-                canvas.create_text(
-                    CELL_SIZE // 2,
-                    CELL_SIZE // 2,
-                    text=str(i + 1),
-                    font=("Arial", 22, "bold")
-                )
-
-                # Clic
-                canvas.bind(
-                    "<Button-1>",
-                    lambda e, L=line, idx=i: self.select_box(L, idx),
-                )
-
-                self.box_cells[line].append({"canvas": canvas, "rect": rect})
-
-            row_index += 1
-
-        tk.Button(
-            frame_bottom,
-            text="Vérifier les images",
-            font=("Arial", 11, "bold"),
-            command=self.check_boxes,
-        ).grid(row=row_index, column=0, columnspan=6, pady=(10, 0))
-
-    # =========================================================
-    #   LOSANGES : DESSIN, SÉLECTION, CORRECTION
-    # =========================================================
-    def draw_diamond(self, canvas, number):
-        w, h = 90, 90
-        cx, cy = w // 2, h // 2
-        size = 30
-
-        # losange
-        canvas.create_polygon(
-            cx, cy - size,
-            cx + size, cy,
-            cx, cy + size,
-            cx - size, cy,
-            outline="black", fill="white", width=2,
-        )
-
-        # numéro
-        canvas.create_text(cx, cy, text=str(number), font=("Arial", 11, "bold"))
-
-        circles = {}
-        positions = {
-            "up":    (cx, cy - size + 10),
-            "right": (cx + size - 10, cy),
-            "down":  (cx, cy + size - 10),
-            "left":  (cx - size + 10, cy),
+        if (userIdx === goodIdx) {
+          correct++;
+        } else {
+          const badCell = document.querySelector(
+            `.abc-cell[data-line="${line}"][data-index="${userIdx}"]`
+          );
+          if (badCell) badCell.classList.add("wrong");
         }
+      });
 
-        for pos_name, (x, y) in positions.items():
-            outer_r = 9
-            inner_r = 4
-
-            outer = canvas.create_oval(
-                x - outer_r, y - outer_r,
-                x + outer_r, y + outer_r,
-                outline="black", width=2, fill="white",
-            )
-            inner = canvas.create_oval(
-                x - inner_r, y - inner_r,
-                x + inner_r, y + inner_r,
-                outline="black", width=1, fill="white",
-            )
-
-            canvas.tag_bind(
-                outer,
-                "<Button-1>",
-                lambda e, n=number, p=pos_name: self.select_diamond(n, p),
-            )
-            canvas.tag_bind(
-                inner,
-                "<Button-1>",
-                lambda e, n=number, p=pos_name: self.select_diamond(n, p),
-            )
-
-            circles[pos_name] = (outer, inner)
-
-        self.diamonds[number] = {"canvas": canvas, "circles": circles}
-
-    def select_diamond(self, number, position):
-        self.selected_positions[number] = position
-        data = self.diamonds[number]
-        canvas = data["canvas"]
-        circles = data["circles"]
-
-        # reset
-        for outer, inner in circles.values():
-            canvas.itemconfig(outer, outline="black", width=2)
-            canvas.itemconfig(inner, fill="white")
-
-        outer, inner = circles[position]
-        canvas.itemconfig(outer, outline="blue", width=3)
-        canvas.itemconfig(inner, fill="#a5c8ff")
-
-    def check_diamonds(self):
-        total = len(self.correct_positions)
-        correct = 0
-
-        # reset visuel
-        for data in self.diamonds.values():
-            for outer, inner in data["circles"].values():
-                data["canvas"].itemconfig(outer, outline="black", width=2)
-                data["canvas"].itemconfig(inner, fill="white")
-
-        for n, good_pos in self.correct_positions.items():
-            data = self.diamonds[n]
-            circles = data["circles"]
-            canvas = data["canvas"]
-            user_pos = self.selected_positions.get(n)
-
-            good_outer, good_inner = circles[good_pos]
-            canvas.itemconfig(good_outer, outline="green", width=3)
-            canvas.itemconfig(good_inner, fill="#9df59d")
-
-            if user_pos == good_pos:
-                correct += 1
-            elif user_pos is not None:
-                bad_outer, bad_inner = circles[user_pos]
-                canvas.itemconfig(bad_outer, outline="red", width=3)
-                canvas.itemconfig(bad_inner, fill="#ffb3b3")
-
-        messagebox.showinfo("Résultat – losanges", f"Score : {correct} / {total}")
-
-    # =========================================================
-    #   CASES A/B/C : SÉLECTION & CORRECTION
-    # =========================================================
-    def select_box(self, line, index):
-        self.selected_boxes[line] = index
-
-        for i, cell in enumerate(self.box_cells[line]):
-            canvas = cell["canvas"]
-            rect = cell["rect"]
-            if i == index:
-                canvas.itemconfig(rect, outline="blue", width=3, fill="#dde9ff")
-            else:
-                canvas.itemconfig(rect, outline="black", width=3, fill="white")
-
-    def check_boxes(self):
-        total = len(self.correct_boxes)
-        correct = 0
-
-        # reset
-        for line, cells in self.box_cells.items():
-            for cell in cells:
-                cell["canvas"].itemconfig(
-                    cell["rect"], outline="black", width=3, fill="white"
-                )
-
-        for line, good_idx in self.correct_boxes.items():
-            cells = self.box_cells[line]
-
-            # bonne réponse en vert
-            good_cell = cells[good_idx]
-            good_canvas = good_cell["canvas"]
-            good_rect = good_cell["rect"]
-            good_canvas.itemconfig(good_rect, outline="green", width=3, fill="#9df59d")
-
-            chosen = self.selected_boxes.get(line)
-
-            if chosen == good_idx:
-                correct += 1
-            elif chosen is not None:
-                bad_cell = cells[chosen]
-                bad_canvas = bad_cell["canvas"]
-                bad_rect = bad_cell["rect"]
-                bad_canvas.itemconfig(bad_rect, outline="red", width=3, fill="#ffb3b3")
-
-        messagebox.showinfo("Résultat – images", f"Score : {correct} / {total}")
-
-
-if __name__ == "__main__":
-    app = TestVisuelApp()
-    app.mainloop()
-
+      document.getElementById(
+        "abcResult"
+      ).textContent = `Score : ${correct} / ${total}`;
+    });
+  </script>
+</body>
+</html>
