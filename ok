@@ -1,0 +1,278 @@
+import tkinter as tk
+from tkinter import messagebox
+
+
+class TestVisuelApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Test visuel – entraînement")
+        self.configure(bg="white")
+
+        # -------------------------
+        # Données "losanges"
+        # -------------------------
+        # position correcte du point pour chaque numéro
+        # (d'après l'image)
+        self.correct_positions = {
+            1: "down",
+            2: "left",
+            3: "right",
+            4: "up",
+            5: "up",
+            6: "right",
+            7: "right",
+            8: "left",
+            9: "down",
+        }
+        self.selected_positions = {}   # numéro -> pos ("up", "down"...)
+        self.diamond_data = {}         # numéro -> {"canvas":..., "circles":{pos:id}}
+
+        # -------------------------
+        # Données "images" A/B/C
+        # -------------------------
+        self.animal_grid = {
+            "A": ["Lapin", "Chat", "Moufette", "Femme", "Coq"],
+            "B": ["Femme", "Coq", "Chat", "Lapin", "Moufette"],
+            "C": ["Moufette", "Lapin", "Femme", "Coq", "Chat"],
+        }
+        # index correct (0-based)
+        self.correct_animals = {"A": 1, "B": 3, "C": 2}
+        self.selected_animals = {}          # "A" -> index
+        self.animal_buttons = {}            # "A" -> [btns...]
+
+        # Construction de l'interface
+        self.create_widgets()
+
+    # =====================================================
+    #  Création des widgets
+    # =====================================================
+
+    def create_widgets(self):
+        # ----- cadre des losanges -----
+        frame_top = tk.Frame(self, bg="white")
+        frame_top.pack(padx=10, pady=10)
+
+        tk.Label(
+            frame_top,
+            text="Losanges (clique sur le cercle correspondant au point)",
+            bg="white",
+            font=("Arial", 12, "bold"),
+        ).grid(row=0, column=0, columnspan=3, pady=(0, 10))
+
+        num = 1
+        for r in range(3):
+            for c in range(3):
+                canvas = tk.Canvas(
+                    frame_top,
+                    width=90,
+                    height=90,
+                    bg="white",
+                    highlightthickness=0,
+                )
+                canvas.grid(row=r + 1, column=c, padx=10, pady=10)
+
+                self.draw_diamond(canvas, num)
+                num += 1
+
+        # bouton de vérification des losanges
+        tk.Button(
+            frame_top,
+            text="Vérifier les losanges",
+            command=self.check_diamonds,
+        ).grid(row=4, column=0, columnspan=3, pady=(10, 0))
+
+        # ----- séparation -----
+        tk.Frame(self, height=2, bg="#cccccc").pack(fill="x", pady=10)
+
+        # ----- cadre des images A/B/C -----
+        frame_bottom = tk.Frame(self, bg="white")
+        frame_bottom.pack(padx=10, pady=(0, 10))
+
+        tk.Label(
+            frame_bottom,
+            text="Lignes A, B, C (clique sur la bonne image de chaque ligne)",
+            bg="white",
+            font=("Arial", 12, "bold"),
+        ).grid(row=0, column=0, columnspan=6, pady=(0, 10))
+
+        row_index = 1
+        for ligne in ["A", "B", "C"]:
+            # lettre à gauche
+            tk.Label(
+                frame_bottom,
+                text=ligne,
+                bg="white",
+                font=("Arial", 12, "bold"),
+            ).grid(row=row_index, column=0, padx=5)
+
+            self.animal_buttons[ligne] = []
+            for i, label in enumerate(self.animal_grid[ligne]):
+                btn = tk.Button(
+                    frame_bottom,
+                    text=label,
+                    width=10,
+                    height=2,
+                    relief="raised",
+                    command=lambda L=ligne, idx=i: self.select_animal(L, idx),
+                )
+                btn.grid(row=row_index, column=i + 1, padx=5, pady=5)
+                self.animal_buttons[ligne].append(btn)
+
+            row_index += 1
+
+        tk.Button(
+            frame_bottom,
+            text="Vérifier les images A / B / C",
+            command=self.check_animals,
+        ).grid(row=row_index, column=0, columnspan=6, pady=(10, 0))
+
+    # =====================================================
+    #  Dessin d'un losange + cercles cliquables
+    # =====================================================
+
+    def draw_diamond(self, canvas, number):
+        w, h = 90, 90
+        cx, cy = w // 2, h // 2
+        size = 30
+
+        # losange (carré tourné)
+        canvas.create_polygon(
+            cx, cy - size,
+            cx + size, cy,
+            cx, cy + size,
+            cx - size, cy,
+            outline="black",
+            fill="white",
+            width=2,
+        )
+
+        # texte du numéro au centre
+        canvas.create_text(cx, cy, text=str(number), font=("Arial", 12, "bold"))
+
+        circles = {}
+
+        # positions des 4 cercles
+        positions = {
+            "up": (cx, cy - size + 10),
+            "right": (cx + size - 10, cy),
+            "down": (cx, cy + size - 10),
+            "left": (cx - size + 10, cy),
+        }
+
+        for pos_name, (x, y) in positions.items():
+            r = 8
+            cid = canvas.create_oval(
+                x - r,
+                y - r,
+                x + r,
+                y + r,
+                outline="black",
+                width=2,
+                fill="white",
+            )
+            circles[pos_name] = cid
+
+            # binding clic
+            canvas.tag_bind(
+                cid,
+                "<Button-1>",
+                lambda event, n=number, p=pos_name: self.select_diamond(n, p),
+            )
+
+        self.diamond_data[number] = {"canvas": canvas, "circles": circles}
+
+    # =====================================================
+    #  Sélection / vérification des losanges
+    # =====================================================
+
+    def select_diamond(self, number, position):
+        """Enregistre la position choisie pour un losange et met à jour l'affichage."""
+        self.selected_positions[number] = position
+
+        data = self.diamond_data[number]
+        canvas = data["canvas"]
+        circles = data["circles"]
+
+        # reset tous les cercles de ce losange
+        for pos_name, cid in circles.items():
+            canvas.itemconfig(cid, outline="black", width=2, fill="white")
+
+        # met en avant la sélection
+        cid = circles[position]
+        canvas.itemconfig(cid, outline="blue", width=3, fill="#dde9ff")
+
+    def check_diamonds(self):
+        total = len(self.correct_positions)
+        correct = 0
+
+        # reset couleurs
+        for number, data in self.diamond_data.items():
+            for cid in data["circles"].values():
+                data["canvas"].itemconfig(cid, outline="black", width=2)
+
+        for number, correct_pos in self.correct_positions.items():
+            data = self.diamond_data[number]
+            circles = data["circles"]
+            canvas = data["canvas"]
+
+            user_pos = self.selected_positions.get(number)
+
+            # cercles corrects en vert, mauvaises réponses en rouge
+            correct_id = circles[correct_pos]
+            if user_pos is not None and user_pos == correct_pos:
+                canvas.itemconfig(correct_id, outline="green", width=3)
+                correct += 1
+            else:
+                canvas.itemconfig(correct_id, outline="green", width=3)
+                if user_pos is not None and user_pos != correct_pos:
+                    wrong_id = circles[user_pos]
+                    canvas.itemconfig(wrong_id, outline="red", width=3)
+
+        messagebox.showinfo(
+            "Résultat losanges",
+            f"Score : {correct} / {total}",
+        )
+
+    # =====================================================
+    #  Sélection / vérification des images A/B/C
+    # =====================================================
+
+    def select_animal(self, line, index):
+        self.selected_animals[line] = index
+
+        for i, btn in enumerate(self.animal_buttons[line]):
+            if i == index:
+                btn.config(relief="sunken", bg="#dde9ff")
+            else:
+                btn.config(relief="raised", bg="SystemButtonFace")
+
+    def check_animals(self):
+        total = len(self.correct_animals)
+        correct = 0
+
+        # reset couleurs
+        for line, btns in self.animal_buttons.items():
+            for btn in btns:
+                btn.config(bg="SystemButtonFace")
+
+        for line, good_idx in self.correct_animals.items():
+            chosen = self.selected_animals.get(line)
+
+            # met la bonne en vert
+            self.animal_buttons[line][good_idx].config(bg="#a5f2a5")
+
+            if chosen is not None and chosen == good_idx:
+                correct += 1
+            elif chosen is not None and chosen != good_idx:
+                # mauvaise en rouge
+                self.animal_buttons[line][chosen].config(bg="#f2a5a5")
+
+        messagebox.showinfo(
+            "Résultat images",
+            f"Score : {correct} / {total}",
+        )
+
+
+if __name__ == "__main__":
+    app = TestVisuelApp()
+    app.mainloop()
